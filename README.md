@@ -11,7 +11,7 @@ Everything here was run against live Helius endpoints. Every number in these REA
 Measure what a reconnect actually recovers instead of assuming it recovered everything.
 
 Findings:
-- `fromSlot` does not backfill `slots` subscription updates. The request is accepted and the stream starts at the live head, so the missed slot updates are gone with no error. Reproduced across three runs on devnet, offsets of 6 to 9 slots.
+- `replay: false` silently discards `fromSlot`. The client type accepts it either way, but with replay disabled the SDK drops it before sending, so a hand-rolled resume recovers nothing and no error is raised. Same request with `replay: true` is honoured exactly, offset 0 with the historical range delivered. Measured side by side by `npm run replay-mode`.
 - `Date.now() - update.createdAt` is negative on this endpoint, because the server clock leads a typical machine. Latency code that filters negatives reports zero samples forever while looking healthy.
 - Healthy slot streams are 90 to 94 percent contiguous. Skipped slots mean a `delta > 1` gap detector fires constantly on a connection that never dropped.
 

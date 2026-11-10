@@ -4,27 +4,27 @@ A LaserStream consumer that measures what a reconnect actually recovers, instead
 
 Most streaming examples print the first message and stop. That works until your process dies for six seconds on mainnet and you have to answer a harder question: did replay give me back every slot I missed, or did it quietly start somewhere else?
 
-This repo answers that with numbers. Running it produced two findings I did not expect, both documented below with the exact data.
+This repo answers that with numbers. Running it produced three findings, all documented below with the exact data.
 
-## Finding 1: `fromSlot` does not backfill `slots` updates
+## Finding 1: `replay: false` silently discards `fromSlot`
 
-LaserStream accepts `fromSlot` on a slots subscription without complaint. It does not deliver the slots you asked for.
+The client type accepts `fromSlot` in a subscribe request whether or not replay is enabled. With `replay: false` the SDK drops it before the request is sent, so the server never sees it and the stream starts at the live head. Nothing errors, nothing warns, and the resume you carefully planned recovers nothing.
 
-Three consecutive runs on `laserstream-devnet-ewr`, subscription `{ slots }` at `CONFIRMED`, forced disconnect, then reconnect from `lastSlot + 1`:
+`npm run replay-mode` compares the two configs on one endpoint. Same subscription, same `fromSlot`, only the config differs:
 
-| Run | Requested `fromSlot` | First slot delivered | Offset |
-|---|---|---|---|
-| 1 | 520774822 | 520774829 | 7 slots |
-| 2 | 520778388 | 520778394 | 6 slots |
-| 3 | 520778388 | 520778397 | 9 slots |
+| Mode | `replay` | Requested | First delivered | Offset | Delivered at or below head |
+|---|---|---|---|---|---|
+| A | `false` | head - 20 | head + 5 | **+25** | 0 of 21 |
+| B | `true` | head - 20 | head - 20 | **0** | 21 of 46 |
+| C | `true` | head - 5 | head - 5 | **0** | 6 of 31 |
 
-A separate probe made it unambiguous. It asked for slot `520774559` while the confirmed head was `520774579`, and received **zero** slot updates at or below that head. The first delivery was `520774585`.
+The server is not the problem. With replay enabled it honours the request exactly, first delivery is the requested slot, and the historical range arrives. The trap is that the two settings are independent in the API surface but not in their effect: `fromSlot` is only meaningful when `replay` is true, and pairing it with `replay: false` fails silently rather than being rejected.
 
-So: the request is accepted, the stream starts at the live head, and the missed slot updates are gone. Nothing errors, and nothing warns. If you assume replay covers a slots subscription, you will silently lose every slot during a disconnect and never find out.
+That is why the demo in `src/` passes `fromSlot` itself. It sets `replay: false` on purpose so the resume is visible and countable, and the consequence is that the resume does not happen: the run reports an offset of 6 to 9 slots, which is the time between deciding to resume and the server pinning the stream to head, not data the server failed to send. Earlier versions of this README blamed the server for that. They were wrong, and this is the correction.
 
-`subscribeReplayInfo()` is working and the window is generous: it reported `firstAvailable = 519910513` against a head of `520774579`, about 864,000 slots or 48 hours. The retention exists. It just does not apply to slot notifications.
+**What to do about it:** set `replay: true` and pass `fromSlot`, and let either the SDK or your own reconnect logic resume, because that combination is the one that actually replays. If you want a hand-rolled resume loop for accounting reasons, you cannot have it with `replay: false`; measure the SDK's resume instead.
 
-**What to do about it:** if slot continuity matters, either subscribe to the data you actually need to be gapless (transactions, accounts, blocks) or accept that a slots-only stream is a liveness signal, not a ledger. The tool here measures the gap so the loss is a number in a report rather than an assumption.
+**Open question worth checking:** the SDK README says replay covers 3000 slots (~20 minutes), while `subscribeReplayInfo()` reported `firstAvailable = 519910513` against a head of `520774579`, about 864,000 slots or 48 hours. That may be a guaranteed floor versus what happens to be retained, and this repo does not settle which.
 
 ## Finding 2: `createdAt` deltas are negative, so naive latency math breaks
 
@@ -104,7 +104,7 @@ Three pieces, each testable on its own.
 
 **Account for gaps** (`src/slot-tracker.ts`). Tracks distinct slots, span, coverage, missed slots, and the largest jump. Duplicate and out of order updates are tolerated, because LaserStream does deliver both: the probe recorded `585, 585, 586, 587, 586, 584`, which is not monotonic.
 
-**Resume with backoff** (`src/stream.ts` + `src/backoff.ts`). Exponential delay with full jitter, capped, with a give-up threshold. `replay: false` is set deliberately: the SDK can resume for you, but then the resume is invisible. Resuming here is what makes "replay start offset" measurable.
+**Resume with backoff** (`src/stream.ts` + `src/backoff.ts`). Exponential delay with full jitter, capped, with a give-up threshold. `replay: false` is deliberate, and Finding 1 is what that costs: the hand-rolled resume is measurable but ineffective, because the SDK strips `fromSlot` in this mode. Run `npm run replay-mode` for the version that does recover.
 
 ## Tests
 
@@ -121,6 +121,7 @@ Read these before quoting anything above.
 - All three findings were measured on **devnet**. LaserStream mainnet requires a Business or Professional plan, so mainnet behaviour is untested here and could differ.
 - Only the `ewr` region was exercised.
 - `slots` subscriptions only. Whether `fromSlot` backfills transactions, accounts, or blocks is a separate question this repo does not answer.
+- Devnet only, one region (`ewr`). Finding 1 is a client-side config interaction and should not be region dependent, but that is an inference rather than a measurement.
 - The "skipped slots are normal" explanation is the well understood cause, but this repo measures the symptom, not the cause.
 
 ## Licence

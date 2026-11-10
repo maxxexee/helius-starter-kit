@@ -11,7 +11,8 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "test": "node --import tsx --test src/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "replay-mode": "tsx src/replay-mode.ts"
   },
   "dependencies": {
     "helius-laserstream": "^2.0.0"
