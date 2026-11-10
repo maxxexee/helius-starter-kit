@@ -116,13 +116,14 @@ export async function main(): Promise<void> {
   if (stripped === undefined || honoured === undefined) {
     throw new Error('expected three mode results')
   }
+  const line = (mode: ModeResult): string =>
+    `replay=${String(mode.replay).padEnd(5)} backfilled ${mode.backfilled} of ${mode.delivered}, offset ${mode.offset}`
+
+  console.info('\nbackfilled counts slots delivered at or below head, offset counts past the request\n')
+  console.info(line(stripped))
+  console.info(line(honoured))
   console.info(
-    `\nWith replay=false the SDK drops fromSlot: ${stripped.backfilled} of ${stripped.delivered} ` +
-      `delivered slots were at or below head, first delivery landed ${stripped.offset} past the request.`,
-  )
-  console.info(
-    `With replay=true the request is honoured exactly: offset ${honoured.offset}, ` +
-      `${honoured.backfilled} of ${honoured.delivered} delivered slots were historical.`,
+    '\nWith replay=false the SDK drops fromSlot before sending, so the resume recovers nothing.',
   )
 }
 
