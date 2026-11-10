@@ -20,7 +20,7 @@ The client type accepts `fromSlot` in a subscribe request whether or not replay 
 
 The server is not the problem. With replay enabled it honours the request exactly, first delivery is the requested slot, and the historical range arrives. The trap is that the two settings are independent in the API surface but not in their effect: `fromSlot` is only meaningful when `replay` is true, and pairing it with `replay: false` fails silently rather than being rejected.
 
-That is why the demo in `src/` passes `fromSlot` itself. It sets `replay: false` on purpose so the resume is visible and countable, and the consequence is that the resume does not happen: the run reports an offset of 6 to 9 slots, which is the time between deciding to resume and the server pinning the stream to head, not data the server failed to send. Earlier versions of this README blamed the server for that. They were wrong, and this is the correction.
+That is why the demo in `src/` passes `fromSlot` itself. It sets `replay: false` on purpose so the resume is visible and countable, and the consequence is that the resume does not happen: the run reports an offset of roughly 20 to 25 slots, which is how far the live head moved between sampling it and the subscription being established, with nothing delivered at or below the head you sampled. Earlier versions of this README blamed the server for that. They were wrong, and this is the correction.
 
 **What to do about it:** set `replay: true` and pass `fromSlot`, and let either the SDK or your own reconnect logic resume, because that combination is the one that actually replays. If you want a hand-rolled resume loop for accounting reasons, you cannot have it with `replay: false`; measure the SDK's resume instead.
 
