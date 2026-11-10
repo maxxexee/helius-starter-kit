@@ -12,7 +12,8 @@ import type { SlotStream, StreamEvents } from './stream'
  * Watches the slot stream, forces a disconnect partway through, and prints what
  * the reconnect actually recovered.
  *
- * Run with DROP_AFTER_MS to see replay in action; leave it at 0 to just measure.
+ * Defaults to one forced disconnect at 15s inside a 60s run. Set DROP_AFTER_MS=0 to
+ * measure a clean stream, or RUN_MS=0 to run until Ctrl-C.
  */
 
 loadEnvFile('.env')

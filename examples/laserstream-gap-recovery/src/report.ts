@@ -29,7 +29,10 @@ function fixed(value: number | null, unit: string): string {
 function offsetsText(offsets: readonly number[]): string {
   if (offsets.length === 0) return 'none (no resume)'
   const allHonoured = offsets.every((offset) => offset === 0)
-  return `${offsets.join(', ')}${allHonoured ? ' (honoured)' : ' (server started later than requested)'}`
+  const suffix = allHonoured
+    ? ' (honoured)'
+    : ' (request carried no fromSlot, so the stream began at the live head)'
+  return `${offsets.join(', ')}${suffix}`
 }
 
 function rows(input: ReportInput): Array<[string, string]> {

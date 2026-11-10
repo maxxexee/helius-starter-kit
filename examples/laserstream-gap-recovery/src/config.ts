@@ -36,6 +36,9 @@ export interface DemoConfig {
 
 const DEFAULT_SUSPICIOUS_GAP_SLOTS = 5
 const DEFAULT_MAX_RECONNECT_ATTEMPTS = 5
+/** One self-contained run: long enough to show a reconnect, short enough to watch. */
+const DEFAULT_RUN_MS = 60_000
+const DEFAULT_DROP_AFTER_MS = 15_000
 
 /**
  * Minimal .env reader so the demo has no dotenv dependency. Existing process
@@ -87,8 +90,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): DemoConfig {
     apiKey,
     endpoint: resolveEndpoint(env.LASERSTREAM_ENDPOINT),
     suspiciousGapSlots: parseInteger(env.SUSPICIOUS_GAP_SLOTS, DEFAULT_SUSPICIOUS_GAP_SLOTS),
-    durationMs: parseInteger(env.RUN_MS, 0),
-    dropAfterMs: parseInteger(env.DROP_AFTER_MS, 0),
+    durationMs: parseInteger(env.RUN_MS, DEFAULT_RUN_MS),
+    dropAfterMs: parseInteger(env.DROP_AFTER_MS, DEFAULT_DROP_AFTER_MS),
     maxReconnectAttempts: parseInteger(env.MAX_RECONNECT_ATTEMPTS, DEFAULT_MAX_RECONNECT_ATTEMPTS),
   }
 }
