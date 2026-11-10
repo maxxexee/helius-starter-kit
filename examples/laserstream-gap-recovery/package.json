@@ -1,0 +1,24 @@
+{
+  "name": "laserstream-gap-recovery",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Measure what a LaserStream reconnect actually recovers, with replay-window clamping and slot gap accounting",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "test": "node --import tsx --test src/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "helius-laserstream": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.7.0"
+  }
+}

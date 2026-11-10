@@ -1,0 +1,21 @@
+{
+  "name": "helius-webhooks-receiver",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A Helius webhook receiver that verifies the auth header, deduplicates retries, and acknowledges inside the one second budget",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "test": "node --import tsx --test src/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.7.0"
+  }
+}

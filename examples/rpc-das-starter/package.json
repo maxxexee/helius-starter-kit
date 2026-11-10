@@ -1,0 +1,21 @@
+{
+  "name": "helius-rpc-das-starter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Helius RPC and DAS API starter with no SDK, so the JSON-RPC contract and the pagination are both visible",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "test": "node --import tsx --test src/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.7.0"
+  }
+}
