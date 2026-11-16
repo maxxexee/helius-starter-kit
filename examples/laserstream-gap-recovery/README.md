@@ -24,7 +24,11 @@ That is why the demo in `src/` passes `fromSlot` itself. It sets `replay: false`
 
 **What to do about it:** set `replay: true` and pass `fromSlot`, and let either the SDK or your own reconnect logic resume, because that combination is the one that actually replays. If you want a hand-rolled resume loop for accounting reasons, you cannot have it with `replay: false`; measure the SDK's resume instead.
 
-**Open question worth checking:** the SDK README says replay covers 3000 slots (~20 minutes), while `subscribeReplayInfo()` reported `firstAvailable = 519910513` against a head of `520774579`, about 864,000 slots or 48 hours. That may be a guaranteed floor versus what happens to be retained, and this repo does not settle which.
+**Answered: the SDK README is out of date, and the docs are right.** [helius-labs/laserstream](https://github.com/helius-labs/laserstream) lists replay as "up to 3000 slots (~20 minutes)", while the [historical replay docs](https://www.helius.dev/docs/laserstream/historical-replay) say ~48 hours (~864,000 slots) and describe the ~20 minutes as the in-memory window that keeps true commitment semantics, not the replay limit. Where `subscribeReplayInfo()` reported `firstAvailable = 519910513` against a head of `520774579`, about 864,000 slots back, the README's "up to 3000" is not just stale but wrong in its direction: it understates the buffer by roughly 288 times.
+
+I checked that by asking for slots at that depth instead of trusting the report. On `laserstream-devnet-ewr`, a request 864,149 slots back was served at exactly the slot asked for, a request 864,184 back was refused with an explicit `OUT_OF_RANGE`, and the 35 slot gap between the two brackets the reported floor. At the 4.18 slots/s devnet produced, that depth is about 57 hours.
+
+The tool is [replayfloor](https://github.com/maxxexee/replayfloor), and its committed `fixtures/` rebuild both tables without an API key. What this does not settle: whether transactions and accounts replay to the same depth as slots, and whether the depth holds on mainnet, which needs a paid plan and is unmeasured here.
 
 ## Finding 2: `createdAt` deltas are negative, so naive latency math breaks
 
