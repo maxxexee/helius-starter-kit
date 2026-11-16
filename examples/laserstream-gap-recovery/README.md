@@ -28,7 +28,9 @@ That is why the demo in `src/` passes `fromSlot` itself. It sets `replay: false`
 
 I checked that by asking for slots at that depth instead of trusting the report. On `laserstream-devnet-ewr`, a request 864,149 slots back was served at exactly the slot asked for, a request 864,184 back was refused with an explicit `OUT_OF_RANGE`, and the 35 slot gap between the two brackets the reported floor. At the 4.18 slots/s devnet produced, that depth is about 57 hours.
 
-The tool is [replayfloor](https://github.com/maxxexee/replayfloor), and its committed `fixtures/` rebuild both tables without an API key. What this does not settle: whether transactions and accounts replay to the same depth as slots, and whether the depth holds on mainnet, which needs a paid plan and is unmeasured here.
+The tool is [replayfloor](https://github.com/maxxexee/replayfloor), and its committed `fixtures/` rebuild both tables without an API key. What this does not settle: whether the depth holds on mainnet, which needs a paid plan and is unmeasured here.
+
+**Transactions reach the same depth.** Nobody resumes on slots, so the same search was run with a transaction filter instead. A request 864,043 slots back was served at exactly the slot asked for and 864,078 back was refused, against 864,149 and 864,184 for slots: the same floor, 106 slots apart. The trap worth worrying about, a slot window of 48 hours over a transaction window of a few hours, is not there. One thing to know if you repeat it: a transaction filter needs an account to match on, and `vote: true` on its own streams nothing on devnet, which reads exactly like a shallow buffer.
 
 ## Finding 2: `createdAt` deltas are negative, so naive latency math breaks
 
@@ -124,7 +126,7 @@ Read these before quoting anything above.
 
 - All three findings were measured on **devnet**. LaserStream mainnet requires a Business or Professional plan, so mainnet behaviour is untested here and could differ.
 - Only the `ewr` region was exercised.
-- `slots` subscriptions only. Whether `fromSlot` backfills transactions, accounts, or blocks is a separate question this repo does not answer.
+- Transactions were measured against the same endpoint and matched the slot depth, but this repo itself only subscribes to slots. Accounts and blocks remain untested.
 - Devnet only, one region (`ewr`). Finding 1 is a client-side config interaction and should not be region dependent, but that is an inference rather than a measurement.
 - The "skipped slots are normal" explanation is the well understood cause, but this repo measures the symptom, not the cause.
 
